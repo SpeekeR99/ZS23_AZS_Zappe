@@ -1,0 +1,4 @@
+numpy
+imgui[glfw]
+wxPython
+opencv-python

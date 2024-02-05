@@ -1,4 +1,6 @@
 numpy
 imgui[glfw]
 wxPython
-opencv-python
+matplotlib
+scipy
+sounddevice

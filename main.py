@@ -110,7 +110,7 @@ def show_sound(name):
     imgui.set_next_window_size(600, 320)
     _, close_bool = imgui.begin(name, True, imgui.WINDOW_NO_SAVED_SETTINGS | imgui.WINDOW_NO_COLLAPSE | imgui.WINDOW_NO_RESIZE)
     imgui.text("Sample rate: " + str(sounds[name]["sample_rate"]) + " Hz")
-    imgui.text("Length: " + str(len(sounds[name]["data"]) / sounds[name]["sample_rate"]) + " s")
+    imgui.text("Length: " + str(round(len(sounds[name]["data"]) / sounds[name]["sample_rate"] * 100) / 100) + " s")
     plot_left_channel = sounds[name]["data"][:, 0].astype(np.float32)
     left_min, left_max = np.min(plot_left_channel), np.max(plot_left_channel)
     plot_right_channel = sounds[name]["data"][:, 1].astype(np.float32)
@@ -202,7 +202,37 @@ def main():
                     glfw.set_window_should_close(window, True)
 
                 imgui.end_menu()
-            if imgui.begin_menu("Edit"):
+            if imgui.begin_menu("Audio effects"):
+                # WAH WAH
+                clicked_filtering_effects, _ = imgui.menu_item("Filtering effects", None, False, True)
+                if clicked_filtering_effects:
+                    show_filtering_effects_window = True
+
+                # FLANGER
+                # PHASER
+                clicked_modulation_effects, _ = imgui.menu_item("Modulation effects", None, False, True)
+                if clicked_modulation_effects:
+                    show_modulation_effects_window = True
+
+                # VIBRATO?
+                # clicked_frequency_effects, _ = imgui.menu_item("Frequency effects", None, False, True)
+                # if clicked_frequency_effects:
+                #     show_frequency_effects_window = True
+
+                # OVERDRIVE
+                # DISTORTION
+                clicked_saturation_effects, _ = imgui.menu_item("Saturation effects", None, False, True)
+                if clicked_saturation_effects:
+                    show_saturation_effects_window = True
+
+                # REVERB
+                clicked_time_effects, _ = imgui.menu_item("Time effects", None, False, True)
+                if clicked_time_effects:
+                    show_time_effects_window = True
+
+                clicked_unclassified_effects, _ = imgui.menu_item("Unclassified effects", None, False, True)
+                if clicked_unclassified_effects:
+                    show_unclassified_effects_window = True
 
                 imgui.end_menu()
             if imgui.begin_menu("Settings"):
@@ -259,8 +289,7 @@ def main():
                     )
                     if filepath:
                         sound = sounds[list(sounds.keys())[current_sound]]
-                        # Save sound
-                        pass
+                        scipy.io.wavfile.write(filepath, sound["sample_rate"], sound["data"])
 
             imgui.end()
 

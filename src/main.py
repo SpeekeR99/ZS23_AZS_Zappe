@@ -1,4 +1,3 @@
-import numpy as np
 from OpenGL.GL import *
 import glfw
 import imgui
@@ -6,6 +5,8 @@ from imgui.integrations.glfw import GlfwRenderer
 import wx
 import scipy.io.wavfile
 import sounddevice as sd
+from effects import *
+from utils import *
 
 
 #  Window width
@@ -24,6 +25,12 @@ show_save_as_dialog = False
 sounds = {}
 #  Currently selected sound
 current_sound = 0
+
+show_wah_wah_window = False
+wah_wah_damp = 0.1
+wah_wah_min_freq = 500
+wah_wah_max_freq = 5000
+wah_wah_wah_freq = 2000
 
 
 def impl_glfw_init():
@@ -148,7 +155,7 @@ def main():
     Main function
     """
     global WINDOW_WIDTH, WINDOW_HEIGHT, show_settings_window, show_about_window, show_save_as_dialog, sounds, \
-        current_sound
+        current_sound, show_wah_wah_window, wah_wah_damp, wah_wah_min_freq, wah_wah_max_freq, wah_wah_wah_freq
 
     app = wx.App()
     app.MainLoop()
@@ -304,6 +311,45 @@ def main():
                     if filepath:
                         sound = sounds[list(sounds.keys())[current_sound]]
                         scipy.io.wavfile.write(filepath, sound["sample_rate"], sound["data"])
+
+            imgui.end()
+
+        if show_wah_wah_window:
+            imgui.set_next_window_size(400, 300, imgui.ONCE)
+            imgui.set_next_window_position(int((WINDOW_WIDTH - 400) / 2), int((WINDOW_HEIGHT - 200) / 2), imgui.ONCE)
+
+            _, show_wah_wah_window = imgui.begin("Wah-wah", True, imgui.WINDOW_NO_COLLAPSE | imgui.WINDOW_NO_RESIZE)
+
+            my_text_separator("Sound selection")
+            _, current_sound = imgui.combo("Smage", current_sound, list(sounds.keys()))
+
+            my_text_separator("Wah-wah Settings")
+            _, wah_wah_damp = imgui.slider_float("Damping", wah_wah_damp, 0.0, 1.0)
+            freq_changed, wah_wah_min_freq = imgui.slider_float("Min frequency", wah_wah_min_freq, 0.0, 10000.0)
+            freq_changed, wah_wah_max_freq = imgui.slider_float("Max frequency", wah_wah_max_freq, 0.0, 10000.0)
+            _ , wah_wah_wah_freq = imgui.slider_float("Wah frequency", wah_wah_wah_freq, 0.0, 10000.0)
+
+            if freq_changed and wah_wah_min_freq > wah_wah_max_freq:
+                wah_wah_max_freq = wah_wah_min_freq + 1
+            elif freq_changed and wah_wah_max_freq < wah_wah_min_freq:
+                wah_wah_min_freq = wah_wah_max_freq - 1
+
+            if imgui.button("Apply effect"):
+                if len(list(sounds.keys())) == 0 or current_sound > len(list(sounds.keys())):
+                    print("No sound selected!")
+                else:
+                    name = list(sounds.keys())[current_sound]
+                    sound = sounds[name]
+                    audio = sound["data"]
+                    audio_l, audio_r = extract_channels(audio)
+                    sample_rate = sound["sample_rate"]
+
+                    out_audio_l, out_sample_rate = apply_wah_wah(audio_l, sample_rate, damp=wah_wah_damp, min_freq=wah_wah_min_freq, max_freq=wah_wah_max_freq, wah_freq=wah_wah_wah_freq)
+                    out_audio_r, out_sample_rate = apply_wah_wah(audio_r, sample_rate, damp=wah_wah_damp, min_freq=wah_wah_min_freq, max_freq=wah_wah_max_freq, wah_freq=wah_wah_wah_freq)
+                    out_audio = to_stereo(out_audio_l, out_audio_r)
+
+                    new_name = avoid_name_duplicates(name.split(".")[0] + " (Wah-Wah)." + name.split(".")[-1])
+                    sounds[new_name] = {"data": out_audio, "sample_rate": out_sample_rate, "show": True}
 
             imgui.end()
 

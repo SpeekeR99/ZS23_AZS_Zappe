@@ -1,4 +1,6 @@
 import numpy as np
+from scipy.signal import fftconvolve
+import scipy.io.wavfile
 
 ping_pong_delay_time = 0.1
 ping_pong_feedback = 0.5
@@ -21,7 +23,11 @@ overdrive_threshold = 0.2
 
 distortion_gain = 15
 
-# reverb
+reverb_ir_names = ["Church", "Forest", "Cave", "Space"]
+reverb_ir_filepaths = ["../sounds/impulse_responses/ir_church.wav", "../sounds/impulse_responses/ir_forest.wav",
+                       "../sounds/impulse_responses/ir_cave.wav", "../sounds/impulse_responses/ir_space.wav"]
+reverb_ir_index = 0
+reverb_mix = 0.5
 
 bit_crusher_bits = 4
 
@@ -126,7 +132,17 @@ def apply_distortion(input_signal, sample_rate):
 
 
 def apply_reverb(input_signal, sample_rate):
-    return input_signal, sample_rate
+    ir_filepath = reverb_ir_filepaths[reverb_ir_index]
+    _, impulse_response = scipy.io.wavfile.read(ir_filepath)
+    if impulse_response.ndim > 1:
+        impulse_response = impulse_response[:, 0]
+
+    norm_signal(impulse_response)
+
+    # Apply the reverb effect
+    output_signal = fftconvolve(input_signal, impulse_response, mode="full")
+    output_signal = reverb_mix * input_signal + (1 - reverb_mix) * output_signal[:len(input_signal)]
+    return output_signal, sample_rate
 
 
 def apply_bitcrusher(input_signal, sample_rate):

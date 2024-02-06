@@ -163,7 +163,7 @@ def main():
 
         if show_effects_window:
             imgui.set_next_window_size(500, 500, imgui.ONCE)
-            imgui.set_next_window_position((WINDOW_WIDTH - 500) / 2, (WINDOW_HEIGHT - 500) / 2, imgui.ONCE)
+            imgui.set_next_window_position((WINDOW_WIDTH - 500) / 2 + 300, (WINDOW_HEIGHT - 500) / 2, imgui.ONCE)
 
             _, show_effects_window = imgui.begin("Audio effects", True, imgui.WINDOW_NO_COLLAPSE)
 
@@ -222,7 +222,12 @@ def main():
 
             if current_effect == 6:  # Reverb
                 my_text_separator("Reverb Settings")
-                # TODO
+
+                for ir_name in effects.reverb_ir_names:
+                    if imgui.radio_button(ir_name, effects.reverb_ir_names.index(ir_name) == effects.reverb_ir_index):
+                        effects.reverb_ir_index = effects.reverb_ir_names.index(ir_name)
+
+                _, effects.reverb_mix = imgui.slider_float("Mix", effects.reverb_mix, 0.0, 1.0)
 
             if current_effect == 7:  # Bit crusher
                 my_text_separator("Bit Crusher Settings")

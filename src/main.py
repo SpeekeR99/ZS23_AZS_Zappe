@@ -21,10 +21,16 @@ def apply_effect_button_callback():
     sample_rate = sound["sample_rate"]
 
     effect_func = effect_functions[current_effect]
-    out_audio_l, out_sample_rate = effect_func(audio_l, sample_rate)
-    out_audio_r, out_sample_rate = effect_func(audio_r, sample_rate)
-    out_audio_l = norm_signal(out_audio_l)
-    out_audio_r = norm_signal(out_audio_r)
+    if effect_func == apply_8d_audio:
+        out_audio, out_sample_rate = effect_func(audio, sample_rate)
+        out_audio_l, out_audio_r = extract_channels(out_audio)
+        out_audio_l = norm_signal(out_audio_l)
+        out_audio_r = norm_signal(out_audio_r)
+    else:
+        out_audio_l, out_sample_rate = effect_func(audio_l, sample_rate)
+        out_audio_r, out_sample_rate = effect_func(audio_r, sample_rate)
+        out_audio_l = norm_signal(out_audio_l)
+        out_audio_r = norm_signal(out_audio_r)
 
     out_audio = to_stereo(out_audio_l, out_audio_r)
 
@@ -210,11 +216,13 @@ def main():
 
             if current_effect == 6:  # Bit crusher
                 my_text_separator("Bit Crusher Settings")
-                # TODO
+
+                _, effects.bit_crusher_bits = imgui.slider_int("Bits", effects.bit_crusher_bits, 1, 16)
 
             if current_effect == 7:  # 8D Audio
                 my_text_separator("8D Audio Settings")
-                # TODO
+
+                _, effects.eight_d_spin_speed = imgui.slider_float("Spin speed", effects.eight_d_spin_speed, 0.0, 1.0)
 
             if imgui.button("Apply effect"):
                 if len(list(sounds.keys())) == 0 or current_sound > len(list(sounds.keys())):

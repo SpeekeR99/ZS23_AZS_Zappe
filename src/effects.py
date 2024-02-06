@@ -1,3 +1,4 @@
+from utils import *
 import numpy as np
 
 wah_wah_damp = 0.1
@@ -12,6 +13,10 @@ flanger_gain = 0.6
 overdrive_threshold = 0.2
 
 distortion_gain = 15
+
+bit_crusher_bits = 4
+
+eight_d_spin_speed = 0.1
 
 
 def norm_signal(input_signal):
@@ -89,8 +94,33 @@ def apply_reverb(input_signal, sample_rate):
 
 
 def apply_bitcrusher(input_signal, sample_rate):
-    return input_signal, sample_rate
+    max_value = 2 ** (bit_crusher_bits - 1) - 1
+
+    output_signal = np.round(input_signal * max_value) / max_value
+
+    return output_signal, sample_rate
 
 
 def apply_8d_audio(input_signal, sample_rate):
-    return input_signal, sample_rate
+    temp_audio = np.zeros((len(input_signal), 4), dtype=np.float32)
+    out_audio = np.zeros((len(input_signal), 2), dtype=np.float32)
+    input_signal_mono = np.mean(input_signal, axis=1)
+
+    for i in range(len(input_signal_mono)):
+        pan_l_r = np.sin(2 * np.pi * (i / sample_rate * eight_d_spin_speed))
+        left_gain = np.cos(pan_l_r * 0.5 * np.pi) + 0.25
+        right_gain = np.sin(pan_l_r * 0.5 * np.pi) + 0.25
+
+        pan_f_b = np.sin(2 * np.pi * (i / sample_rate * eight_d_spin_speed))
+        front_gain = np.abs(np.cos(pan_f_b * 0.5 * np.pi)) + 0.1
+        back_gain = np.abs(np.sin(pan_f_b * 0.5 * np.pi)) + 0.1
+
+        temp_audio[i, 0] = (left_gain * front_gain) * input_signal_mono[i]
+        temp_audio[i, 1] = (right_gain * front_gain) * input_signal_mono[i]
+        temp_audio[i, 2] = (left_gain * back_gain) * input_signal_mono[i]
+        temp_audio[i, 3] = (right_gain * back_gain) * input_signal_mono[i]
+
+        out_audio[i, 0] = temp_audio[i, 0] + temp_audio[i, 2]
+        out_audio[i, 1] = temp_audio[i, 1] + temp_audio[i, 3]
+
+    return out_audio, sample_rate

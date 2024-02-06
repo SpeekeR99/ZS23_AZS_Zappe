@@ -4,3 +4,4 @@ wxPython
 matplotlib
 scipy
 sounddevice
+librosa

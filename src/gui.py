@@ -1,9 +1,13 @@
+from utils import to_stereo
 import numpy as np
 from OpenGL.GL import *
 import glfw
 import imgui
 import scipy.io.wavfile
 import sounddevice as sd
+import matplotlib.pyplot as plt
+import librosa
+import librosa.display
 
 # Window name
 WINDOW_NAME = "Sound Effects Semester Work"
@@ -45,6 +49,9 @@ def load_sound(filepath):
     if audio is None:
         print("Error loading sound: " + filepath + "!")
         return
+    if audio.ndim == 1:
+        second_channel = np.copy(audio)
+        audio = to_stereo(audio, second_channel)
     name = avoid_name_duplicates(filepath)
     sounds[name] = {"data": audio, "sample_rate": sample_rate, "show": True}
 
@@ -91,7 +98,6 @@ def show_sound(name):
 
     plot_left_channel = sounds[name]["data"][:, 0].astype(np.float32)
     left_min, left_max = np.min(plot_left_channel), np.max(plot_left_channel)
-
     plot_right_channel = sounds[name]["data"][:, 1].astype(np.float32)
     right_min, right_max = np.min(plot_right_channel), np.max(plot_right_channel)
 
@@ -103,6 +109,9 @@ def show_sound(name):
     imgui.same_line()
     if imgui.button("Stop"):
         sd.stop()
+
+    if imgui.button("Spectrogram"):
+        plot_spectrogram(name)
 
     imgui.end()
     return close_bool
@@ -146,3 +155,16 @@ def my_text_separator(text):
     imgui.separator()
     imgui.text(text)
     imgui.separator()
+
+
+def plot_spectrogram(name):
+    audio_stereo = sounds[name]["data"]
+    audio_mono = np.mean(audio_stereo, axis=1).astype(np.float32)
+    sample_rate = sounds[name]["sample_rate"]
+
+    plt.figure(figsize=(12, 6))
+    librosa.display.specshow(librosa.amplitude_to_db(np.abs(librosa.stft(audio_mono)), ref=np.max),
+                             y_axis="log", x_axis="time", sr=sample_rate, cmap="plasma")
+    plt.colorbar(format="%+2.0f dB")
+    plt.title(name)
+    plt.show(block=False)

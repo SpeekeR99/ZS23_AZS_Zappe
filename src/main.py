@@ -199,13 +199,16 @@ def main():
             if current_effect == 2:  # Flanger
                 my_text_separator("Flanger Settings")
 
-                _, effects.flanger_max_delay = imgui.slider_int("Max delay (ms)", effects.flanger_max_delay, 0, 50)
-                _, effects.flanger_freq = imgui.slider_float("Frequency of delay oscillations (Hz)", effects.flanger_freq, 0.0, 10.0)
-                _, effects.flanger_gain = imgui.slider_float("Gain", effects.flanger_gain, 0.0, 1.0)
+                _, effects.flanger_freq = imgui.slider_float("Frequency (Hz)", effects.flanger_freq, 0.0, 1.0)
+                _, effects.flanger_depth = imgui.slider_float("Depth", effects.flanger_depth, 0.0, 0.5)
+                _, effects.flanger_mix = imgui.slider_float("Mix", effects.flanger_mix, 0.0, 1.0)
 
             if current_effect == 3:  # Phaser
                 my_text_separator("Phaser Settings")
-                # TODO
+
+                _, effects.phaser_max_delay = imgui.slider_int("Max delay (ms)", effects.phaser_max_delay, 0.0, 100)
+                _, effects.phaser_freq = imgui.slider_float("Frequency (Hz)", effects.phaser_freq, 0.0, 10.0)
+                _, effects.phaser_gain = imgui.slider_float("Gain", effects.phaser_gain, 0.0, 1.0)
 
             if current_effect == 4:  # Overdrive
                 my_text_separator("Overdrive Settings")

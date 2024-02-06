@@ -1,4 +1,3 @@
-from utils import *
 import numpy as np
 
 ping_pong_delay_time = 0.1
@@ -10,11 +9,13 @@ wah_wah_min_freq = 500
 wah_wah_max_freq = 5000
 wah_wah_wah_freq = 2000
 
-flanger_max_delay = 12
-flanger_freq = 2
-flanger_gain = 0.6
+flanger_freq = 0.1
+flanger_depth = 0.002
+flanger_mix = 0.5
 
-# phaser
+phaser_max_delay = 20
+phaser_freq = 0.5
+phaser_gain = 0.6
 
 overdrive_threshold = 0.2
 
@@ -78,21 +79,31 @@ def apply_wah_wah(input_signal, sample_rate):
 
 
 def apply_flanger(input_signal, sample_rate):
-    num = int(flanger_max_delay * 1e-3 * sample_rate)
-    output_signal = np.zeros(len(input_signal))
+    output_signal = np.zeros_like(input_signal, dtype=np.float32)
 
-    for n in range(len(input_signal)):
-        d = int(0.5 * num * (1 + np.sin(2 * np.pi * flanger_freq * n / sample_rate)))
-        if d < n:
-            output_signal[n] = input_signal[n] + flanger_gain * input_signal[n-d]
-        else:
-            output_signal[n] = input_signal[n]
+    time = np.arange(len(input_signal)) / sample_rate
+    lfo = np.sin(2 * np.pi * flanger_freq * time) * flanger_depth
+
+    for i in range(len(input_signal)):
+        delay = int(lfo[i] * sample_rate)
+        if i + delay < len(input_signal):
+            output_signal[i] = flanger_mix * input_signal[i] + (1 - flanger_mix) * input_signal[i + delay]
 
     return output_signal, sample_rate
 
 
 def apply_phaser(input_signal, sample_rate):
-    return input_signal, sample_rate
+    num = int(phaser_max_delay * 1e-3 * sample_rate)
+    output_signal = np.zeros(len(input_signal))
+
+    for n in range(len(input_signal)):
+        d = int(0.5 * num * (1 + np.sin(2 * np.pi * phaser_freq * n / sample_rate)))
+        if d < n:
+            output_signal[n] = input_signal[n] + phaser_gain * input_signal[n - d]
+        else:
+            output_signal[n] = input_signal[n]
+
+    return output_signal, sample_rate
 
 
 def apply_overdrive(input_signal, sample_rate):

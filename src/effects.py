@@ -1,6 +1,10 @@
 from utils import *
 import numpy as np
 
+ping_pong_delay_time = 0.1
+ping_pong_feedback = 0.5
+ping_pong_mix = 0.5
+
 wah_wah_damp = 0.1
 wah_wah_min_freq = 500
 wah_wah_max_freq = 5000
@@ -10,18 +14,39 @@ flanger_max_delay = 12
 flanger_freq = 2
 flanger_gain = 0.6
 
+# phaser
+
 overdrive_threshold = 0.2
 
 distortion_gain = 15
+
+# reverb
 
 bit_crusher_bits = 4
 
 eight_d_spin_speed = 0.1
 
+vocal_doubler_delay = 1
+vocal_doubler_detune_cents = 10
+
 
 def norm_signal(input_signal):
     output_signal = input_signal / np.max(np.absolute(input_signal))
     return output_signal
+
+
+def apply_ping_pong_delay(input_signal, sample_rate):
+    num_samples = len(input_signal)
+    delay_samples = int(ping_pong_delay_time * sample_rate)
+    delayed_stereo = np.zeros((num_samples, 2))
+
+    for i in range(delay_samples, num_samples):
+        delayed_stereo[i, 0] = input_signal[i, 0] + ping_pong_feedback * input_signal[i - delay_samples, 1]
+        delayed_stereo[i, 1] = input_signal[i, 1] + ping_pong_feedback * input_signal[i - delay_samples, 0]
+
+    out_audio = ping_pong_mix * input_signal + (1 - ping_pong_mix) * delayed_stereo
+
+    return out_audio, sample_rate
 
 
 def apply_wah_wah(input_signal, sample_rate):
@@ -124,3 +149,16 @@ def apply_8d_audio(input_signal, sample_rate):
         out_audio[i, 1] = temp_audio[i, 1] + temp_audio[i, 3]
 
     return out_audio, sample_rate
+
+
+def apply_vocal_doubler(input_signal, sample_rate):
+    input_copy = input_signal.copy()
+    delay_samples = int(vocal_doubler_delay * sample_rate / 1000)
+
+    duplicate_audio = np.concatenate((np.zeros(delay_samples), input_copy[:-delay_samples]))
+    pitch_shift_factor = 2 ** (vocal_doubler_detune_cents / 1200)
+    detuned_duplicate = np.interp(np.arange(len(duplicate_audio)) / pitch_shift_factor, np.arange(len(duplicate_audio)), duplicate_audio)
+
+    output_signal = 0.5 * input_copy + 0.5 * detuned_duplicate
+
+    return output_signal, sample_rate

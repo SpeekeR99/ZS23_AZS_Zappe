@@ -25,7 +25,7 @@ sounds = {}
 current_sound = 0
 
 #  Different sound effects
-effect_names = ["Wah Wah", "Flanger", "Phaser", "Overdrive", "Distortion", "Reverb", "Bitcrusher", "8D Audio"]
+effect_names = ["Ping Pong Delay", "Wah Wah", "Flanger", "Phaser", "Overdrive", "Distortion", "Reverb", "Bitcrusher", "8D Audio", "Vocal Doubler"]
 #  Currently selected effect
 current_effect = 0
 

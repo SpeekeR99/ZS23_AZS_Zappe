@@ -7,8 +7,8 @@ import wx
 
 
 def apply_effect_button_callback():
-    effect_functions = [apply_wah_wah, apply_flanger, apply_phaser, apply_overdrive, apply_distortion, apply_reverb,
-                        apply_bitcrusher, apply_8d_audio]
+    effect_functions = [apply_ping_pong_delay, apply_wah_wah, apply_flanger, apply_phaser, apply_overdrive, apply_distortion, apply_reverb,
+                        apply_bitcrusher, apply_8d_audio, apply_vocal_doubler]
 
     name = list(sounds.keys())[current_sound]
     sound = sounds[name]
@@ -21,7 +21,7 @@ def apply_effect_button_callback():
     sample_rate = sound["sample_rate"]
 
     effect_func = effect_functions[current_effect]
-    if effect_func == apply_8d_audio:
+    if effect_func == apply_8d_audio or effect_func == apply_ping_pong_delay:
         out_audio, out_sample_rate = effect_func(audio, sample_rate)
         out_audio_l, out_audio_r = extract_channels(out_audio)
         out_audio_l = norm_signal(out_audio_l)
@@ -173,7 +173,14 @@ def main():
             my_text_separator("Effect selection")
             _, current_effect = imgui.combo("Effect", current_effect, effect_names)
 
-            if current_effect == 0:  # Wah-wah
+            if current_effect == 0:  # Ping pong delay
+                my_text_separator("Ping-pong delay settings")
+
+                _, effects.ping_pong_delay_time = imgui.slider_float("Delay time (s)", effects.ping_pong_delay_time, 0.0, 1.0)
+                _, effects.ping_pong_feedback = imgui.slider_float("Feedback", effects.ping_pong_feedback, 0.0, 1.0)
+                _, effects.ping_pong_mix = imgui.slider_float("Mix", effects.ping_pong_mix, 0.0, 1.0)
+
+            if current_effect == 1:  # Wah-wah
                 my_text_separator("Wah-wah Settings")
 
                 old_min_freq = effects.wah_wah_min_freq
@@ -189,40 +196,46 @@ def main():
                 if old_max_freq != effects.wah_wah_max_freq and effects.wah_wah_max_freq < effects.wah_wah_min_freq:
                     effects.wah_wah_min_freq = effects.wah_wah_max_freq - 1
 
-            if current_effect == 1:  # Flanger
+            if current_effect == 2:  # Flanger
                 my_text_separator("Flanger Settings")
 
                 _, effects.flanger_max_delay = imgui.slider_int("Max delay (ms)", effects.flanger_max_delay, 0, 50)
                 _, effects.flanger_freq = imgui.slider_float("Frequency of delay oscillations (Hz)", effects.flanger_freq, 0.0, 10.0)
                 _, effects.flanger_gain = imgui.slider_float("Gain", effects.flanger_gain, 0.0, 1.0)
 
-            if current_effect == 2:  # Phaser
+            if current_effect == 3:  # Phaser
                 my_text_separator("Phaser Settings")
                 # TODO
 
-            if current_effect == 3:  # Overdrive
+            if current_effect == 4:  # Overdrive
                 my_text_separator("Overdrive Settings")
 
                 _, effects.overdrive_threshold = imgui.slider_float("Threshold", effects.overdrive_threshold, 0.0, 1.0)
 
-            if current_effect == 4:  # Distortion
+            if current_effect == 5:  # Distortion
                 my_text_separator("Distortion Settings")
 
                 _, effects.distortion_gain = imgui.slider_int("Gain", effects.distortion_gain, 1, 100)
 
-            if current_effect == 5:  # Reverb
+            if current_effect == 6:  # Reverb
                 my_text_separator("Reverb Settings")
                 # TODO
 
-            if current_effect == 6:  # Bit crusher
+            if current_effect == 7:  # Bit crusher
                 my_text_separator("Bit Crusher Settings")
 
                 _, effects.bit_crusher_bits = imgui.slider_int("Bits", effects.bit_crusher_bits, 1, 16)
 
-            if current_effect == 7:  # 8D Audio
+            if current_effect == 8:  # 8D Audio
                 my_text_separator("8D Audio Settings")
 
                 _, effects.eight_d_spin_speed = imgui.slider_float("Spin speed", effects.eight_d_spin_speed, 0.0, 1.0)
+
+            if current_effect == 9:  # Vocal doubler
+                my_text_separator("Vocal Doubler Settings")
+
+                _, effects.vocal_doubler_delay = imgui.slider_float("Delay (ms)", effects.vocal_doubler_delay, 0.1, 50.0)
+                _, effects.vocal_doubler_detune_cents = imgui.slider_int("Detune cents", effects.vocal_doubler_detune_cents, 1, 200)
 
             if imgui.button("Apply effect"):
                 if len(list(sounds.keys())) == 0 or current_sound > len(list(sounds.keys())):

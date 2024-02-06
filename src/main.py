@@ -1,8 +1,27 @@
 from gui import *
+import effects
 from effects import *
 from utils import *
 from imgui.integrations.glfw import GlfwRenderer
 import wx
+
+
+def apply_effect_button_callback():
+    effect_functions = [apply_wah_wah]
+
+    name = list(sounds.keys())[current_sound]
+    sound = sounds[name]
+    audio = sound["data"]
+    audio_l, audio_r = extract_channels(audio)
+    sample_rate = sound["sample_rate"]
+
+    effect_func = effect_functions[current_effect]
+    out_audio_l, out_sample_rate = effect_func(audio_l, sample_rate)
+    out_audio_r, out_sample_rate = effect_func(audio_r, sample_rate)
+    out_audio = to_stereo(out_audio_l, out_audio_r)
+
+    new_name = avoid_name_duplicates(name.split(".")[0] + " (" + effect_names[current_effect] + ")." + name.split(".")[-1])
+    sounds[new_name] = {"data": out_audio, "sample_rate": out_sample_rate, "show": True}
 
 
 def main():
@@ -10,8 +29,7 @@ def main():
     Main function
     """
     global WINDOW_WIDTH, WINDOW_HEIGHT, show_settings_window, show_about_window, show_save_as_dialog, sounds, \
-        current_sound, show_wah_wah_window, wah_wah_damp, wah_wah_min_freq, wah_wah_max_freq, wah_wah_wah_freq
-
+        current_sound, effect_names, current_effect, show_effects_window
     app = wx.App()
     app.MainLoop()
     imgui.create_context()
@@ -66,49 +84,9 @@ def main():
 
                 imgui.end_menu()
             if imgui.begin_menu("Audio effects"):
-                imgui.menu_item("Filtering effects", None, False, False)
-                clicked_wah_wah, _ = imgui.menu_item("Wah-wah", None, False, True)
-                if clicked_wah_wah:
-                    show_wah_wah_window = True
-                imgui.separator()
-
-                imgui.menu_item("Modulation effects", None, False, False)
-                clicked_flanger, _ = imgui.menu_item("Flanger", None, False, True)
-                if clicked_flanger:
-                    show_flanger_window = True
-                clicked_phaser, _ = imgui.menu_item("Phaser", None, False, True)
-                if clicked_phaser:
-                    show_phaser_window = True
-                imgui.separator()
-
-                # imgui.menu_item("Frequency effects", None, False, False)
-                # clicked_vibrato, _ = imgui.menu_item("Vibrato", None, False, True)
-                # if clicked_vibrato:
-                #     show_vibrato_window = True
-                # imgui.separator()
-
-                imgui.menu_item("Saturation effects", None, False, False)
-                clicked_overdrive, _ = imgui.menu_item("Overdrive", None, False, True)
-                if clicked_overdrive:
-                    show_overdrive_window = True
-                clicked_distortion, _ = imgui.menu_item("Distortion", None, False, True)
-                if clicked_distortion:
-                    show_distortion_window = True
-                imgui.separator()
-
-                imgui.menu_item("Time effects", None, False, False)
-                clicked_reverb, _ = imgui.menu_item("Reverb", None, False, True)
-                if clicked_reverb:
-                    show_reverb_window = True
-                imgui.separator()
-
-                imgui.menu_item("Unclassified effects", None, False, False)
-                clicked_bit_crusher, _ = imgui.menu_item("Bit crusher", None, False, True)
-                if clicked_bit_crusher:
-                    show_bit_crusher_window = True
-                clicked_spin_around, _ = imgui.menu_item("Spin around (8D audio)", None, False, True)
-                if clicked_spin_around:
-                    show_spin_around_window = True
+                clicked_choose, _ = imgui.menu_item("Choose effect...", None, False, True)
+                if clicked_choose:
+                    show_effects_window = True
 
                 imgui.end_menu()
             if imgui.begin_menu("Settings"):
@@ -169,42 +147,39 @@ def main():
 
             imgui.end()
 
-        if show_wah_wah_window:
-            imgui.set_next_window_size(400, 300, imgui.ONCE)
-            imgui.set_next_window_position(int((WINDOW_WIDTH - 400) / 2), int((WINDOW_HEIGHT - 200) / 2), imgui.ONCE)
+        if show_effects_window:
+            imgui.set_next_window_size(500, 500, imgui.ONCE)
+            imgui.set_next_window_position((WINDOW_WIDTH - 500) / 2, (WINDOW_HEIGHT - 500) / 2, imgui.ONCE)
 
-            _, show_wah_wah_window = imgui.begin("Wah-wah", True, imgui.WINDOW_NO_COLLAPSE | imgui.WINDOW_NO_RESIZE)
+            _, show_effects_window = imgui.begin("Audio effects", True, imgui.WINDOW_NO_COLLAPSE)
 
             my_text_separator("Sound selection")
-            _, current_sound = imgui.combo("Smage", current_sound, list(sounds.keys()))
+            _, current_sound = imgui.combo("Sound", current_sound, list(sounds.keys()))
 
-            my_text_separator("Wah-wah Settings")
-            _, wah_wah_damp = imgui.slider_float("Damping", wah_wah_damp, 0.0, 1.0)
-            freq_changed, wah_wah_min_freq = imgui.slider_float("Min frequency", wah_wah_min_freq, 0.0, 10000.0)
-            freq_changed, wah_wah_max_freq = imgui.slider_float("Max frequency", wah_wah_max_freq, 0.0, 10000.0)
-            _ , wah_wah_wah_freq = imgui.slider_float("Wah frequency", wah_wah_wah_freq, 0.0, 10000.0)
+            my_text_separator("Effect selection")
+            _, current_effect = imgui.combo("Effect", current_effect, effect_names)
 
-            if freq_changed and wah_wah_min_freq > wah_wah_max_freq:
-                wah_wah_max_freq = wah_wah_min_freq + 1
-            elif freq_changed and wah_wah_max_freq < wah_wah_min_freq:
-                wah_wah_min_freq = wah_wah_max_freq - 1
+            if current_effect == 0:  # Wah-wah
+                my_text_separator("Wah-wah Settings")
+
+                old_min_freq = effects.wah_wah_min_freq
+                old_max_freq = effects.wah_wah_max_freq
+
+                _, effects.wah_wah_damp = imgui.slider_float("Damping", effects.wah_wah_damp, 0.0, 1.0)
+                _, effects.wah_wah_min_freq = imgui.slider_float("Min frequency", effects.wah_wah_min_freq, 0.0, 10000.0)
+                _, effects.wah_wah_max_freq = imgui.slider_float("Max frequency", effects.wah_wah_max_freq, 0.0, 10000.0)
+                _, effects.wah_wah_wah_freq = imgui.slider_float("Wah frequency", effects.wah_wah_wah_freq, 0.0, 10000.0)
+
+                if old_min_freq != effects.wah_wah_min_freq and effects.wah_wah_min_freq > effects.wah_wah_max_freq:
+                    effects.wah_wah_max_freq = effects.wah_wah_min_freq + 1
+                if old_max_freq != effects.wah_wah_max_freq and effects.wah_wah_max_freq < effects.wah_wah_min_freq:
+                    effects.wah_wah_min_freq = effects.wah_wah_max_freq - 1
 
             if imgui.button("Apply effect"):
                 if len(list(sounds.keys())) == 0 or current_sound > len(list(sounds.keys())):
                     print("No sound selected!")
                 else:
-                    name = list(sounds.keys())[current_sound]
-                    sound = sounds[name]
-                    audio = sound["data"]
-                    audio_l, audio_r = extract_channels(audio)
-                    sample_rate = sound["sample_rate"]
-
-                    out_audio_l, out_sample_rate = apply_wah_wah(audio_l, sample_rate, damp=wah_wah_damp, min_freq=wah_wah_min_freq, max_freq=wah_wah_max_freq, wah_freq=wah_wah_wah_freq)
-                    out_audio_r, out_sample_rate = apply_wah_wah(audio_r, sample_rate, damp=wah_wah_damp, min_freq=wah_wah_min_freq, max_freq=wah_wah_max_freq, wah_freq=wah_wah_wah_freq)
-                    out_audio = to_stereo(out_audio_l, out_audio_r)
-
-                    new_name = avoid_name_duplicates(name.split(".")[0] + " (Wah-Wah)." + name.split(".")[-1])
-                    sounds[new_name] = {"data": out_audio, "sample_rate": out_sample_rate, "show": True}
+                    apply_effect_button_callback()
 
             imgui.end()
 

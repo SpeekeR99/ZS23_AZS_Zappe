@@ -11,14 +11,14 @@ def norm_signal(input_signal):
     return output_signal
 
 
-def apply_wah_wah(input_signal, sample_rate, damp=wah_wah_damp, min_freq=wah_wah_min_freq, max_freq=wah_wah_max_freq, wah_freq=wah_wah_wah_freq):
+def apply_wah_wah(input_signal, sample_rate):
     output_signal = np.zeros(len(input_signal))
 
     outh = np.zeros(len(input_signal))
     outl = np.zeros(len(input_signal))
 
-    delta = wah_freq / sample_rate
-    centerf = np.concatenate((np.arange(min_freq, max_freq, delta), np.arange(max_freq, min_freq, -delta)))
+    delta = wah_wah_wah_freq / sample_rate
+    centerf = np.concatenate((np.arange(wah_wah_min_freq, wah_wah_max_freq, delta), np.arange(wah_wah_max_freq, wah_wah_min_freq, -delta)))
 
     while len(centerf) < len(input_signal):
         centerf = np.concatenate((centerf, centerf))
@@ -31,7 +31,7 @@ def apply_wah_wah(input_signal, sample_rate, damp=wah_wah_damp, min_freq=wah_wah
     outl[0] = f1 * output_signal[0]
 
     for n in range(1, len(input_signal)):
-        outh[n] = input_signal[n] - outl[n-1] -  2 * damp * output_signal[n-1]
+        outh[n] = input_signal[n] - outl[n-1] - 2 * wah_wah_damp * output_signal[n-1]
         output_signal[n] = f1 * outh[n] + output_signal[n-1]
         outl[n] = f1 * output_signal[n] + outl[n-1]
         f1 = 2 * np.sin(np.pi * centerf[n] / sample_rate)

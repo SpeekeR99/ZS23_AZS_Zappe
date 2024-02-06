@@ -24,8 +24,13 @@ sounds = {}
 #  Currently selected sound
 current_sound = 0
 
-# Whether to show the wah wah window
-show_wah_wah_window = False
+#  Different sound effects
+effect_names = ["Wah Wah", "Flanger", "Phaser", "Overdrive", "Distortion", "Reverb", "Bitcrusher", "Spin around (8D audio)"]
+#  Currently selected effect
+current_effect = 0
+
+#  Whether to show the effects window
+show_effects_window = False
 
 
 def load_sound(filepath):

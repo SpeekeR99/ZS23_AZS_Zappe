@@ -109,19 +109,25 @@ def show_sound(name):
     global sounds
     imgui.set_next_window_size(600, 320)
     _, close_bool = imgui.begin(name, True, imgui.WINDOW_NO_SAVED_SETTINGS | imgui.WINDOW_NO_COLLAPSE | imgui.WINDOW_NO_RESIZE)
+
     imgui.text("Sample rate: " + str(sounds[name]["sample_rate"]) + " Hz")
     imgui.text("Length: " + str(round(len(sounds[name]["data"]) / sounds[name]["sample_rate"] * 100) / 100) + " s")
+
     plot_left_channel = sounds[name]["data"][:, 0].astype(np.float32)
     left_min, left_max = np.min(plot_left_channel), np.max(plot_left_channel)
+
     plot_right_channel = sounds[name]["data"][:, 1].astype(np.float32)
     right_min, right_max = np.min(plot_right_channel), np.max(plot_right_channel)
-    imgui.plot_lines("L", plot_left_channel, scale_min=left_min, scale_max=left_max, graph_size=(600, 100))
-    imgui.plot_lines("R", plot_right_channel, scale_min=right_min, scale_max=right_max, graph_size=(600, 100))
+
+    imgui.plot_lines("L", plot_left_channel, scale_min=left_min, scale_max=left_max, graph_size=(600, 100), overlay_text="Left channel")
+    imgui.plot_lines("R", plot_right_channel, scale_min=right_min, scale_max=right_max, graph_size=(600, 100), overlay_text="Right channel")
+
     if imgui.button("Play"):
         play_sound(name)
     imgui.same_line()
     if imgui.button("Stop"):
         sd.stop()
+
     imgui.end()
     return close_bool
 
@@ -141,12 +147,8 @@ def main():
     """
     Main function
     """
-    global WINDOW_WIDTH, WINDOW_HEIGHT, show_settings_window, show_about_window, show_edge_detection_window, \
-        show_blur_window, blur_kernel_size, show_threshold_window, show_save_as_dialog, sounds, current_sound, \
-        current_edge_detection_method, otsu_threshold, threshold_value, laplacian_square, \
-        current_defined_direction_method, defined_direction_horizontal, defined_direction_vertical, mask_size, \
-        mask_methods_kernel, forward_difference, backward_difference, point_detection_threshold, canny_sigma, \
-        canny_lower_thresh, canny_upper_thresh, marr_hildreth_sigma
+    global WINDOW_WIDTH, WINDOW_HEIGHT, show_settings_window, show_about_window, show_save_as_dialog, sounds, \
+        current_sound
 
     app = wx.App()
     app.MainLoop()
@@ -177,7 +179,6 @@ def main():
                     ).ShowModal()
                     if sure == wx.ID_YES:
                         sounds = {}
-                        show_edge_detection_window = False
                         show_about_window = False
                         show_settings_window = False
 
@@ -203,36 +204,49 @@ def main():
 
                 imgui.end_menu()
             if imgui.begin_menu("Audio effects"):
-                # WAH WAH
-                clicked_filtering_effects, _ = imgui.menu_item("Filtering effects", None, False, True)
-                if clicked_filtering_effects:
-                    show_filtering_effects_window = True
+                imgui.menu_item("Filtering effects", None, False, False)
+                clicked_wah_wah, _ = imgui.menu_item("Wah-wah", None, False, True)
+                if clicked_wah_wah:
+                    show_wah_wah_window = True
+                imgui.separator()
 
-                # FLANGER
-                # PHASER
-                clicked_modulation_effects, _ = imgui.menu_item("Modulation effects", None, False, True)
-                if clicked_modulation_effects:
-                    show_modulation_effects_window = True
+                imgui.menu_item("Modulation effects", None, False, False)
+                clicked_flanger, _ = imgui.menu_item("Flanger", None, False, True)
+                if clicked_flanger:
+                    show_flanger_window = True
+                clicked_phaser, _ = imgui.menu_item("Phaser", None, False, True)
+                if clicked_phaser:
+                    show_phaser_window = True
+                imgui.separator()
 
-                # VIBRATO?
-                # clicked_frequency_effects, _ = imgui.menu_item("Frequency effects", None, False, True)
-                # if clicked_frequency_effects:
-                #     show_frequency_effects_window = True
+                # imgui.menu_item("Frequency effects", None, False, False)
+                # clicked_vibrato, _ = imgui.menu_item("Vibrato", None, False, True)
+                # if clicked_vibrato:
+                #     show_vibrato_window = True
+                # imgui.separator()
 
-                # OVERDRIVE
-                # DISTORTION
-                clicked_saturation_effects, _ = imgui.menu_item("Saturation effects", None, False, True)
-                if clicked_saturation_effects:
-                    show_saturation_effects_window = True
+                imgui.menu_item("Saturation effects", None, False, False)
+                clicked_overdrive, _ = imgui.menu_item("Overdrive", None, False, True)
+                if clicked_overdrive:
+                    show_overdrive_window = True
+                clicked_distortion, _ = imgui.menu_item("Distortion", None, False, True)
+                if clicked_distortion:
+                    show_distortion_window = True
+                imgui.separator()
 
-                # REVERB
-                clicked_time_effects, _ = imgui.menu_item("Time effects", None, False, True)
-                if clicked_time_effects:
-                    show_time_effects_window = True
+                imgui.menu_item("Time effects", None, False, False)
+                clicked_reverb, _ = imgui.menu_item("Reverb", None, False, True)
+                if clicked_reverb:
+                    show_reverb_window = True
+                imgui.separator()
 
-                clicked_unclassified_effects, _ = imgui.menu_item("Unclassified effects", None, False, True)
-                if clicked_unclassified_effects:
-                    show_unclassified_effects_window = True
+                imgui.menu_item("Unclassified effects", None, False, False)
+                clicked_bit_crusher, _ = imgui.menu_item("Bit crusher", None, False, True)
+                if clicked_bit_crusher:
+                    show_bit_crusher_window = True
+                clicked_spin_around, _ = imgui.menu_item("Spin around (8D audio)", None, False, True)
+                if clicked_spin_around:
+                    show_spin_around_window = True
 
                 imgui.end_menu()
             if imgui.begin_menu("Settings"):

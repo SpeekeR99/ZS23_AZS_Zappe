@@ -7,9 +7,15 @@ import wx
 
 
 def apply_effect_button_callback():
+    """
+    Callback for the apply effect button
+    Applies the currently selected effect with the currently selected parameters to the currently selected sound
+    """
+    # Array of effect functions
     effect_functions = [apply_ping_pong_delay, apply_wah_wah, apply_flanger, apply_phaser, apply_overdrive, apply_distortion, apply_reverb,
                         apply_bitcrusher, apply_8d_audio, apply_vocal_doubler]
 
+    # Get the current sound
     name = list(sounds.keys())[current_sound]
     sound = sounds[name]
 
@@ -20,20 +26,25 @@ def apply_effect_button_callback():
 
     sample_rate = sound["sample_rate"]
 
+    # Get the current effect
     effect_func = effect_functions[current_effect]
-    if effect_func == apply_8d_audio or effect_func == apply_ping_pong_delay:
+    # Apply the effect
+    if effect_func == apply_8d_audio or effect_func == apply_ping_pong_delay:  # These effects require stereo audio
         out_audio, out_sample_rate = effect_func(audio, sample_rate)
         out_audio_l, out_audio_r = extract_channels(out_audio)
-        out_audio_l = norm_signal(out_audio_l)
-        out_audio_r = norm_signal(out_audio_r)
-    else:
+
+    else:  # All other work for both mono and stereo audio
         out_audio_l, out_sample_rate = effect_func(audio_l, sample_rate)
         out_audio_r, out_sample_rate = effect_func(audio_r, sample_rate)
-        out_audio_l = norm_signal(out_audio_l)
-        out_audio_r = norm_signal(out_audio_r)
 
+    # Normalize the output
+    out_audio_l = norm_signal(out_audio_l)
+    out_audio_r = norm_signal(out_audio_r)
+
+    # Convert the output to stereo
     out_audio = to_stereo(out_audio_l, out_audio_r)
 
+    # Add the new sound to the dictionary
     new_name = avoid_name_duplicates(name.split(".")[0] + " (" + effect_names[current_effect] + ")." + name.split(".")[-1])
     sounds[new_name] = {"data": out_audio, "sample_rate": out_sample_rate, "show": True}
 
@@ -44,6 +55,7 @@ def main():
     """
     global WINDOW_WIDTH, WINDOW_HEIGHT, show_settings_window, show_about_window, show_save_as_dialog, sounds, \
         current_sound, effect_names, current_effect, show_effects_window
+    # Initialize the GUI
     app = wx.App()
     app.MainLoop()
     imgui.create_context()
@@ -56,12 +68,14 @@ def main():
     current_style = 0
     background_color = (29. / 255, 29. / 255, 29. / 255)
 
+    # Main loop
     while not glfw.window_should_close(window):
         glfw.poll_events()
         impl.process_inputs()
 
         imgui.new_frame()
 
+        # Menu bar
         if imgui.begin_main_menu_bar():
             if imgui.begin_menu("File"):
                 clicked_new, _ = imgui.menu_item("New Blank Project", None, False, True)
@@ -119,6 +133,7 @@ def main():
                 imgui.end_menu()
             imgui.end_main_menu_bar()
 
+        # Closed effects
         if to_be_deleted:
             sounds.pop(to_be_deleted)
             to_be_deleted = None
@@ -137,6 +152,7 @@ def main():
                     else:
                         sounds[name]["show"] = True
 
+        # Save as dialog
         if show_save_as_dialog:
             imgui.set_next_window_size(500, 100, imgui.ONCE)
             imgui.set_next_window_position((WINDOW_WIDTH - 500) / 2, (WINDOW_HEIGHT - 100) / 2, imgui.ONCE)
@@ -161,6 +177,7 @@ def main():
 
             imgui.end()
 
+        # Effects window
         if show_effects_window:
             imgui.set_next_window_size(500, 500, imgui.ONCE)
             imgui.set_next_window_position((WINDOW_WIDTH - 500) / 2 + 300, (WINDOW_HEIGHT - 500) / 2, imgui.ONCE)
@@ -253,6 +270,7 @@ def main():
 
             imgui.end()
 
+        # Settings window
         if show_settings_window:
             imgui.set_next_window_size(400, 200, imgui.ONCE)
             imgui.set_next_window_position(int((WINDOW_WIDTH - 400) / 2), int((WINDOW_HEIGHT - 200) / 2), imgui.ONCE)
@@ -296,6 +314,7 @@ def main():
 
             imgui.end()
 
+        # About window
         if show_about_window:
             imgui.set_next_window_size(300, 100, imgui.ALWAYS)
             imgui.set_next_window_position(int((WINDOW_WIDTH - 300) / 2), int((WINDOW_HEIGHT - 100) / 2), imgui.ALWAYS)
@@ -316,6 +335,7 @@ def main():
         impl.render(imgui.get_draw_data())
         glfw.swap_buffers(window)
 
+    # Cleanup
     impl.shutdown()
     glfw.terminate()
 

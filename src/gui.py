@@ -77,6 +77,11 @@ def avoid_name_duplicates(filepath):
 
 
 def play_sound(name):
+    """
+    Plays the sound with the given name
+    :param name: Name of the sound
+    :return: None
+    """
     sound = sounds[name]
     audio = np.int16(sound["data"]/np.max(np.abs(sound["data"])) * 32767)
     sample_rate = sound["sample_rate"]
@@ -159,6 +164,11 @@ def my_text_separator(text):
 
 
 def plot_spectrogram(name):
+    """
+    Plots the spectrogram of the sound with the given name
+    :param name: Name of the sound
+    :return: None
+    """
     audio_stereo = sounds[name]["data"]
     audio_mono = np.mean(audio_stereo, axis=1).astype(np.float32)
     sample_rate = sounds[name]["sample_rate"]

@@ -9,6 +9,10 @@ flanger_max_delay = 12
 flanger_freq = 2
 flanger_gain = 0.6
 
+overdrive_threshold = 0.2
+
+distortion_gain = 15
+
 
 def norm_signal(input_signal):
     output_signal = input_signal / np.max(np.absolute(input_signal))
@@ -40,14 +44,11 @@ def apply_wah_wah(input_signal, sample_rate):
         outl[n] = f1 * output_signal[n] + outl[n-1]
         f1 = 2 * np.sin(np.pi * centerf[n] / sample_rate)
 
-    output_signal = norm_signal(output_signal)
-
     return output_signal, sample_rate
 
 
 def apply_flanger(input_signal, sample_rate):
-    num = int(flanger_max_delay * 1e-3 * sample_rate
-              )
+    num = int(flanger_max_delay * 1e-3 * sample_rate)
     output_signal = np.zeros(len(input_signal))
 
     for n in range(len(input_signal)):
@@ -57,6 +58,39 @@ def apply_flanger(input_signal, sample_rate):
         else:
             output_signal[n] = input_signal[n]
 
-    output_signal = norm_signal(output_signal)
+    return output_signal, sample_rate
+
+
+def apply_phaser(input_signal, sample_rate):
+    return input_signal, sample_rate
+
+
+def apply_overdrive(input_signal, sample_rate):
+    output_signal = np.zeros(len(input_signal))
+
+    output_signal = np.where(np.absolute(input_signal) < overdrive_threshold, 2 * input_signal, output_signal)
+    output_signal = np.where(np.absolute(input_signal) >= overdrive_threshold, np.where(input_signal > 0, (3 - (2 - 3 * input_signal) ** 2) / 3, -(3 - (2 - 3 * np.absolute(input_signal)) ** 2) / 3), output_signal)
+    output_signal = np.where(np.absolute(input_signal) > 2 * overdrive_threshold, np.where(input_signal > 0, 1, -1), output_signal)
 
     return output_signal, sample_rate
+
+
+def apply_distortion(input_signal, sample_rate):
+    q = np.sign(input_signal)
+
+    alpha = -1 * float(distortion_gain)
+    output_signal = q * (1 - np.exp(alpha * q * input_signal))
+
+    return output_signal, sample_rate
+
+
+def apply_reverb(input_signal, sample_rate):
+    return input_signal, sample_rate
+
+
+def apply_bitcrusher(input_signal, sample_rate):
+    return input_signal, sample_rate
+
+
+def apply_8d_audio(input_signal, sample_rate):
+    return input_signal, sample_rate

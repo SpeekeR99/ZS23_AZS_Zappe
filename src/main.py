@@ -7,17 +7,25 @@ import wx
 
 
 def apply_effect_button_callback():
-    effect_functions = [apply_wah_wah, apply_flanger]
+    effect_functions = [apply_wah_wah, apply_flanger, apply_phaser, apply_overdrive, apply_distortion, apply_reverb,
+                        apply_bitcrusher, apply_8d_audio]
 
     name = list(sounds.keys())[current_sound]
     sound = sounds[name]
+
     audio = sound["data"]
     audio_l, audio_r = extract_channels(audio)
+    audio_l = norm_signal(audio_l)
+    audio_r = norm_signal(audio_r)
+
     sample_rate = sound["sample_rate"]
 
     effect_func = effect_functions[current_effect]
     out_audio_l, out_sample_rate = effect_func(audio_l, sample_rate)
     out_audio_r, out_sample_rate = effect_func(audio_r, sample_rate)
+    out_audio_l = norm_signal(out_audio_l)
+    out_audio_r = norm_signal(out_audio_r)
+
     out_audio = to_stereo(out_audio_l, out_audio_r)
 
     new_name = avoid_name_duplicates(name.split(".")[0] + " (" + effect_names[current_effect] + ")." + name.split(".")[-1])
@@ -181,6 +189,32 @@ def main():
                 _, effects.flanger_max_delay = imgui.slider_int("Max delay (ms)", effects.flanger_max_delay, 0, 50)
                 _, effects.flanger_freq = imgui.slider_float("Frequency of delay oscillations (Hz)", effects.flanger_freq, 0.0, 10.0)
                 _, effects.flanger_gain = imgui.slider_float("Gain", effects.flanger_gain, 0.0, 1.0)
+
+            if current_effect == 2:  # Phaser
+                my_text_separator("Phaser Settings")
+                # TODO
+
+            if current_effect == 3:  # Overdrive
+                my_text_separator("Overdrive Settings")
+
+                _, effects.overdrive_threshold = imgui.slider_float("Threshold", effects.overdrive_threshold, 0.0, 1.0)
+
+            if current_effect == 4:  # Distortion
+                my_text_separator("Distortion Settings")
+
+                _, effects.distortion_gain = imgui.slider_int("Gain", effects.distortion_gain, 1, 100)
+
+            if current_effect == 5:  # Reverb
+                my_text_separator("Reverb Settings")
+                # TODO
+
+            if current_effect == 6:  # Bit crusher
+                my_text_separator("Bit Crusher Settings")
+                # TODO
+
+            if current_effect == 7:  # 8D Audio
+                my_text_separator("8D Audio Settings")
+                # TODO
 
             if imgui.button("Apply effect"):
                 if len(list(sounds.keys())) == 0 or current_sound > len(list(sounds.keys())):

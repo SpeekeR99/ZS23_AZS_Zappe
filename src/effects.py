@@ -1,12 +1,17 @@
 import numpy as np
 
+wah_wah_damp = 0.1
+wah_wah_min_freq = 500
+wah_wah_max_freq = 5000
+wah_wah_wah_freq = 2000
+
 
 def norm_signal(input_signal):
     output_signal = input_signal / np.max(np.absolute(input_signal))
     return output_signal
 
 
-def apply_wah_wah(input_signal, sample_rate, damp=0.1, min_freq=500, max_freq=5000, wah_freq=2000):
+def apply_wah_wah(input_signal, sample_rate, damp=wah_wah_damp, min_freq=wah_wah_min_freq, max_freq=wah_wah_max_freq, wah_freq=wah_wah_wah_freq):
     output_signal = np.zeros(len(input_signal))
 
     outh = np.zeros(len(input_signal))

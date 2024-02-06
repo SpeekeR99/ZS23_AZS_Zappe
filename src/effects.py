@@ -5,6 +5,10 @@ wah_wah_min_freq = 500
 wah_wah_max_freq = 5000
 wah_wah_wah_freq = 2000
 
+flanger_max_delay = 12
+flanger_freq = 2
+flanger_gain = 0.6
+
 
 def norm_signal(input_signal):
     output_signal = input_signal / np.max(np.absolute(input_signal))
@@ -35,6 +39,23 @@ def apply_wah_wah(input_signal, sample_rate):
         output_signal[n] = f1 * outh[n] + output_signal[n-1]
         outl[n] = f1 * output_signal[n] + outl[n-1]
         f1 = 2 * np.sin(np.pi * centerf[n] / sample_rate)
+
+    output_signal = norm_signal(output_signal)
+
+    return output_signal, sample_rate
+
+
+def apply_flanger(input_signal, sample_rate):
+    num = int(flanger_max_delay * 1e-3 * sample_rate
+              )
+    output_signal = np.zeros(len(input_signal))
+
+    for n in range(len(input_signal)):
+        d = int(0.5 * num * (1 + np.sin(2 * np.pi * flanger_freq * n / sample_rate)))
+        if d < n:
+            output_signal[n] = input_signal[n] + flanger_gain * input_signal[n-d]
+        else:
+            output_signal[n] = input_signal[n]
 
     output_signal = norm_signal(output_signal)
 

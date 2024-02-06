@@ -7,7 +7,7 @@ import wx
 
 
 def apply_effect_button_callback():
-    effect_functions = [apply_wah_wah]
+    effect_functions = [apply_wah_wah, apply_flanger]
 
     name = list(sounds.keys())[current_sound]
     sound = sounds[name]
@@ -166,14 +166,21 @@ def main():
                 old_max_freq = effects.wah_wah_max_freq
 
                 _, effects.wah_wah_damp = imgui.slider_float("Damping", effects.wah_wah_damp, 0.0, 1.0)
-                _, effects.wah_wah_min_freq = imgui.slider_float("Min frequency", effects.wah_wah_min_freq, 0.0, 10000.0)
-                _, effects.wah_wah_max_freq = imgui.slider_float("Max frequency", effects.wah_wah_max_freq, 0.0, 10000.0)
-                _, effects.wah_wah_wah_freq = imgui.slider_float("Wah frequency", effects.wah_wah_wah_freq, 0.0, 10000.0)
+                _, effects.wah_wah_min_freq = imgui.slider_float("Min frequency (Hz)", effects.wah_wah_min_freq, 0.0, 10000.0)
+                _, effects.wah_wah_max_freq = imgui.slider_float("Max frequency (Hz)", effects.wah_wah_max_freq, 0.0, 10000.0)
+                _, effects.wah_wah_wah_freq = imgui.slider_float("Wah frequency (Hz)", effects.wah_wah_wah_freq, 0.0, 10000.0)
 
                 if old_min_freq != effects.wah_wah_min_freq and effects.wah_wah_min_freq > effects.wah_wah_max_freq:
                     effects.wah_wah_max_freq = effects.wah_wah_min_freq + 1
                 if old_max_freq != effects.wah_wah_max_freq and effects.wah_wah_max_freq < effects.wah_wah_min_freq:
                     effects.wah_wah_min_freq = effects.wah_wah_max_freq - 1
+
+            if current_effect == 1:  # Flanger
+                my_text_separator("Flanger Settings")
+
+                _, effects.flanger_max_delay = imgui.slider_int("Max delay (ms)", effects.flanger_max_delay, 0, 50)
+                _, effects.flanger_freq = imgui.slider_float("Frequency of delay oscillations (Hz)", effects.flanger_freq, 0.0, 10.0)
+                _, effects.flanger_gain = imgui.slider_float("Gain", effects.flanger_gain, 0.0, 1.0)
 
             if imgui.button("Apply effect"):
                 if len(list(sounds.keys())) == 0 or current_sound > len(list(sounds.keys())):

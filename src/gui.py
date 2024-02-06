@@ -34,7 +34,7 @@ effect_names = ["Ping Pong Delay", "Wah Wah", "Flanger", "Phaser", "Overdrive", 
 current_effect = 0
 
 #  Whether to show the effects window
-show_effects_window = False
+show_effects_window = True
 
 
 def load_sound(filepath):
@@ -91,6 +91,7 @@ def show_sound(name):
     """
     global sounds
     imgui.set_next_window_size(600, 320)
+    imgui.set_next_window_position(50 + np.random.randint(-25, 25), 50 + np.random.randint(-25, 25), imgui.FIRST_USE_EVER)
     _, close_bool = imgui.begin(name, True, imgui.WINDOW_NO_SAVED_SETTINGS | imgui.WINDOW_NO_COLLAPSE | imgui.WINDOW_NO_RESIZE)
 
     imgui.text("Sample rate: " + str(sounds[name]["sample_rate"]) + " Hz")

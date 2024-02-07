@@ -177,5 +177,7 @@ def plot_spectrogram(name):
     librosa.display.specshow(librosa.amplitude_to_db(np.abs(librosa.stft(audio_mono)), ref=np.max),
                              y_axis="log", x_axis="time", sr=sample_rate, cmap="plasma")
     plt.colorbar(format="%+2.0f dB")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Frequency (log(Hz))")
     plt.title(name)
     plt.show(block=False)
